@@ -61,12 +61,37 @@ A powerful **Model Context Protocol (MCP)** server designed for advanced geospat
 
 ### Local Development
 
+#### Option A: Standard Pip
 1.  **Install Dependencies**:
     ```bash
     pip install -r requirements.txt
     ```
 
 2.  **Run Server**:
+    ```bash
+    ./start.sh
+    ```
+
+#### Option B: Using `uv` (Recommended for Speed)
+[uv](https://github.com/astral-sh/uv) is an extremely fast Python package installer and resolver.
+
+1.  **Install uv** (if not installed):
+    ```bash
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ```
+
+2.  **Create a Virtual Environment**:
+    ```bash
+    uv venv
+    source .venv/bin/activate
+    ```
+
+3.  **Install Dependencies**:
+    ```bash
+    uv pip install -r requirements.txt
+    ```
+
+4.  **Run Server**:
     ```bash
     ./start.sh
     ```

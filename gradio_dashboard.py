@@ -45,8 +45,8 @@ def get_los(obs_lat, obs_lon, tgt_lat, tgt_lon):
     if isinstance(res, str): return res
     return json.dumps(res, indent=2)
 
-def render_map(lat, lon):
-    res = call_mcp("render_heatmap", {"lat": float(lat), "lon": float(lon)})
+def render_map(lat, lon, radius, style):
+    res = call_mcp("render_heatmap", {"lat": float(lat), "long": float(lon), "radius_km": float(radius), "style": style})
     if isinstance(res, str): return None
     if "image_base64" in res:
         img_data = base64.b64decode(res["image_base64"])
@@ -165,8 +165,8 @@ Available Tools:
    - Example: {"tool": "elevation", "arguments": {"lat": 36.1, "lon": -112.1}}
 2. line_of_sight(observer_lat, observer_lon, target_lat, target_lon, observer_height_m=2.0, target_height_m=2.0) -> Check visibility.
    - Example: {"tool": "line_of_sight", "arguments": {"observer_lat": 36.1, "observer_lon": -112.1, "target_lat": 36.2, "target_lon": -112.2, "observer_height_m": 10}}
-3. render_heatmap(lat, lon) -> Get a terrain heatmap image.
-   - Example: {"tool": "render_heatmap", "arguments": {"lat": 36.1, "lon": -112.1}}
+3. render_heatmap(lat, lon, radius_km=5.0, style='terrain') -> Get a terrain heatmap image.
+   - Example: {"tool": "render_heatmap", "arguments": {"lat": 36.1, "lon": -112.1, "radius_km": 10, "style": "viridis"}}
 4. distance(lat1, lon1, lat2, lon2) -> Calculate distance in meters.
    - Example: {"tool": "distance", "arguments": {"lat1": 36.1, "lon1": -112.1, "lat2": 36.2, "lon2": -112.2}}
 
@@ -235,10 +235,42 @@ If you don't need a tool, just answer the question normally.
     except Exception as e:
         return f"Error: {str(e)}"
 
+# Configuration Persistence
+CONFIG_FILE = "config.json"
+CURRENT_CONFIG = {
+    "hf_token": os.getenv("HF_TOKEN", ""),
+    "model_id": "Qwen/Qwen2.5-72B-Instruct"
+}
+
+def load_config():
+    global CURRENT_CONFIG
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, 'r') as f:
+                saved_config = json.load(f)
+                # Update only keys that exist in saved_config
+                for k, v in saved_config.items():
+                    if v: CURRENT_CONFIG[k] = v
+        except Exception as e:
+            print(f"Error loading config: {e}")
+    # Ensure env var is fallback if not in file or empty
+    if not CURRENT_CONFIG["hf_token"]:
+        CURRENT_CONFIG["hf_token"] = os.getenv("HF_TOKEN", "")
+
+def save_config_to_file():
+    try:
+        with open(CONFIG_FILE, 'w') as f:
+            json.dump(CURRENT_CONFIG, f)
+    except Exception as e:
+        print(f"Error saving config: {e}")
+
+# Load config on startup
+load_config()
+
 with gr.Blocks(title="Geo MCP Dashboard") as demo:
-    # State for configuration
-    hf_token_state = gr.State(os.getenv("HF_TOKEN"))
-    model_id_state = gr.State("Qwen/Qwen2.5-72B-Instruct")
+    # State for configuration - use lambdas to fetch latest global config on session start
+    hf_token_state = gr.State(lambda: CURRENT_CONFIG["hf_token"])
+    model_id_state = gr.State(lambda: CURRENT_CONFIG["model_id"])
     settings_visible = gr.State(False)
 
     with gr.Row(variant="panel", equal_height=True):
@@ -252,12 +284,12 @@ with gr.Blocks(title="Geo MCP Dashboard") as demo:
             token_input = gr.Textbox(
                 label="Hugging Face API Token", 
                 type="password", 
-                value=os.getenv("HF_TOKEN"),
+                value=lambda: CURRENT_CONFIG["hf_token"],
                 placeholder="hf_..."
             )
             model_dropdown = gr.Dropdown(
-                choices=["Qwen/Qwen2.5-72B-Instruct", "meta-llama/Llama-3.3-70B-Instruct", "mistralai/Mistral-7B-Instruct-v0.3"],
-                value="Qwen/Qwen2.5-72B-Instruct",
+                choices=["Qwen/Qwen2.5-72B-Instruct", "meta-llama/Llama-3.1-8B-Instruct"],
+                value=lambda: CURRENT_CONFIG["model_id"],
                 label="Model ID"
             )
         save_btn = gr.Button("Save Settings")
@@ -267,15 +299,23 @@ with gr.Blocks(title="Geo MCP Dashboard") as demo:
             return new_state, gr.update(visible=new_state)
             
         def save_settings(token, model):
-            return token, model, False, gr.update(visible=False)
+            # Update global config
+            CURRENT_CONFIG["hf_token"] = token
+            CURRENT_CONFIG["model_id"] = model
+            save_config_to_file()
+            return token, model, False, gr.update(visible=False), f"**Current Model:** `{model}`"
 
         settings_btn.click(toggle_settings, inputs=[settings_visible], outputs=[settings_visible, settings_panel])
-        save_btn.click(save_settings, inputs=[token_input, model_dropdown], outputs=[hf_token_state, model_id_state, settings_visible, settings_panel])
-
+        
     with gr.Tabs():
         with gr.Tab("AI Assistant"):
             gr.Markdown("### Chat with your Geospatial Data")
-            gr.Markdown("Powered by Open Source LLMs (via Hugging Face). Requires a [HF Token](https://huggingface.co/settings/tokens).")
+            with gr.Row():
+                gr.Markdown("Powered by Open Source LLMs (via Hugging Face). Requires a [HF Token](https://huggingface.co/settings/tokens).")
+                current_model_display = gr.Markdown(value=lambda: f"**Current Model:** `{CURRENT_CONFIG['model_id']}`")
+            
+            save_btn.click(save_settings, inputs=[token_input, model_dropdown], outputs=[hf_token_state, model_id_state, settings_visible, settings_panel, current_model_display])
+            
             chatbot = gr.ChatInterface(
                 chat_with_agent, 
                 additional_inputs=[hf_token_state, model_id_state],
@@ -299,6 +339,8 @@ with gr.Blocks(title="Geo MCP Dashboard") as demo:
             with gr.Row():
                 with gr.Column(scale=1):
                     gr.Markdown("### 📋 Select Mission")
+                    drone_speed = gr.Slider(minimum=5, maximum=30, value=15, label="Drone Speed (m/s)", step=1)
+                    
                     btn_rim = gr.Button("🚁 Rim Survey", variant="primary")
                     gr.Markdown("*High-altitude survey of the canyon rim. Focus on coverage and stability.*")
                     
@@ -314,7 +356,7 @@ with gr.Blocks(title="Geo MCP Dashboard") as demo:
             with gr.Row():
                 mission_report = gr.Markdown("### 📊 Mission Analysis Report\n\n*Select a mission to generate report...*")
 
-            def analyze_mission(mission_type):
+            def analyze_mission(mission_type, speed):
                 # 1. Setup Mission Parameters
                 if mission_type == "rim":
                     route_file = "rim_survey.geojson"
@@ -353,8 +395,15 @@ with gr.Blocks(title="Geo MCP Dashboard") as demo:
                     d = call_mcp("distance", {"lat1": p1[1], "lon1": p1[0], "lat2": p2[1], "lon2": p2[0]})
                     if isinstance(d, dict): total_dist += d['distance_m']
                 
+                # Time Calculation
+                flight_time_sec = total_dist / speed
+                flight_time_min = int(flight_time_sec // 60)
+                flight_time_rem_sec = int(flight_time_sec % 60)
+
                 report += f"**📏 Flight Path**\n"
                 report += f"- **Total Distance:** {total_dist/1000:.2f} km\n"
+                report += f"- **Drone Speed:** {speed} m/s\n"
+                report += f"- **Est. Flight Time:** {flight_time_min}m {flight_time_rem_sec}s\n"
                 report += f"- **Waypoints:** {len(coords)}\n"
                 report += f"- **Target Altitude:** {drone_alt}m AGL\n\n"
 
@@ -394,9 +443,9 @@ with gr.Blocks(title="Geo MCP Dashboard") as demo:
                 
                 return fig, report
 
-            btn_rim.click(lambda: analyze_mission("rim"), outputs=[mission_plot, mission_report])
-            btn_tour.click(lambda: analyze_mission("tour"), outputs=[mission_plot, mission_report])
-            btn_river.click(lambda: analyze_mission("river"), outputs=[mission_plot, mission_report])
+            btn_rim.click(lambda s: analyze_mission("rim", s), inputs=[drone_speed], outputs=[mission_plot, mission_report])
+            btn_tour.click(lambda s: analyze_mission("tour", s), inputs=[drone_speed], outputs=[mission_plot, mission_report])
+            btn_river.click(lambda s: analyze_mission("river", s), inputs=[drone_speed], outputs=[mission_plot, mission_report])
 
         with gr.Tab("Tools"):
             with gr.Row():
@@ -404,12 +453,17 @@ with gr.Blocks(title="Geo MCP Dashboard") as demo:
                     gr.Markdown("### Elevation & Heatmap")
                     lat_input = gr.Number(label="Latitude", value=36.1)
                     lon_input = gr.Number(label="Longitude", value=-112.1)
+                    with gr.Row():
+                        radius_input = gr.Slider(minimum=1, maximum=50, value=5, label="Radius (km)")
+                        style_dropdown = gr.Dropdown(choices=["terrain", "viridis", "plasma", "magma", "inferno"], value="terrain", label="Style")
+                    
                     btn_elev = gr.Button("Get Elevation")
                     out_elev = gr.Textbox(label="Result")
                     btn_map = gr.Button("Render Heatmap")
                     out_map = gr.Image(label="Terrain Heatmap")
+                    
                     btn_elev.click(get_elevation, inputs=[lat_input, lon_input], outputs=out_elev)
-                    btn_map.click(render_map, inputs=[lat_input, lon_input], outputs=out_map)
+                    btn_map.click(render_map, inputs=[lat_input, lon_input, radius_input, style_dropdown], outputs=out_map)
                 
                 with gr.Column():
                     gr.Markdown("### Line of Sight")
@@ -440,14 +494,14 @@ with gr.Blocks(title="Geo MCP Dashboard") as demo:
                     btn_dist.click(calc_dist, inputs=[d_lat1, d_lon1, d_lat2, d_lon2], outputs=out_dist)
 
                 with gr.Column():
-                    gr.Markdown("### Coordinate Converter (MGRS)")
+                    gr.Markdown("### Coordinate Converter (Military Grid Reference System)")
                     with gr.Row():
                         c_lat = gr.Number(label="Lat", value=36.1)
                         c_lon = gr.Number(label="Lon", value=-112.1)
                         btn_to_mgrs = gr.Button("To MGRS")
                     
                     with gr.Row():
-                        c_mgrs = gr.Textbox(label="MGRS String", value="12SWC8096096860")
+                        c_mgrs = gr.Textbox(label="Military Grid Reference System (MGRS) String", value="12SWC8096096860")
                         btn_from_mgrs = gr.Button("To Lat/Lon")
                     
                     out_coords = gr.Textbox(label="Conversion Result")

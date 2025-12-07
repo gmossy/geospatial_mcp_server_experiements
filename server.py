@@ -138,7 +138,7 @@ def tool_to_mgrs(args: dict) -> MCPToolResult:
 
 def tool_from_mgrs(args: dict) -> MCPToolResult:
     try:
-        mgrs_str = str(args["mgrs"])
+        mgrs_str = str(args["mgrs"]).replace(" ", "")
         lat, lon = mgrs_converter.toLatLon(mgrs_str)
         return MCPToolResult(ok=True, data={"lat": lat, "lon": lon})
     except Exception as e:
@@ -332,36 +332,52 @@ def tool_line_of_sight(args: dict) -> MCPToolResult:
         return MCPToolResult(ok=False, error=str(e))
 
 
+from rasterio.windows import from_bounds
+
 def tool_render_heatmap(args: dict) -> MCPToolResult:
     try:
-        # Default to full extent of first tile if no bounds provided
-        # For simplicity, just render the first tile found or the one covering lat/lon
-        lat = args.get("lat")
-        lon = args.get("lon")
+        lat = float(args.get("lat", 36.1))
+        lon = float(args.get("lon", -112.1))
+        radius_km = float(args.get("radius_km", 5.0))
+        style = args.get("style", "terrain")
         
-        ds = None
-        if lat is not None and lon is not None:
-            ds, crs = tile_manager.get_tile(float(lat), float(lon))
-        elif tile_manager.tiles:
-            # Just pick the first one
-            ds = rasterio.open(tile_manager.tiles[0][1])
-            
+        ds, crs = tile_manager.get_tile(lat, lon)
+        if not ds and tile_manager.tiles:
+             ds = rasterio.open(tile_manager.tiles[0][1])
+        
         if not ds:
             return MCPToolResult(ok=False, error="No elevation data found to render.")
 
-        # Read data (downsample for speed/size if needed)
-        data = ds.read(1)
+        # Calculate bounds for cropping
+        # 1 deg lat ~ 111km
+        delta_lat = radius_km / 111.0
+        # 1 deg lon ~ 111km * cos(lat)
+        delta_lon = radius_km / (111.0 * math.cos(math.radians(lat)))
         
+        min_lon, max_lon = lon - delta_lon, lon + delta_lon
+        min_lat, max_lat = lat - delta_lat, lat + delta_lat
+        
+        # Get window
+        window = from_bounds(min_lon, min_lat, max_lon, max_lat, ds.transform)
+        
+        # Read data
+        data = ds.read(1, window=window)
+        
+        if data.size == 0:
+             # Fallback to full read if window is out of bounds or empty
+             data = ds.read(1)
+
         # Mask nodata
         if ds.nodata is not None:
             data = np.ma.masked_equal(data, ds.nodata)
             
         # Create plot
         plt.figure(figsize=(8, 6))
-        plt.imshow(data, cmap='terrain')
+        plt.imshow(data, cmap=style, extent=[min_lon, max_lon, min_lat, max_lat])
         plt.colorbar(label='Elevation (m)')
-        plt.title(f"Elevation Heatmap")
-        plt.axis('off')
+        plt.title(f"Elevation Heatmap ({style})\nCenter: {lat}, {lon} | Radius: {radius_km}km")
+        plt.xlabel("Longitude")
+        plt.ylabel("Latitude")
         
         # Save to buffer
         buf = io.BytesIO()
@@ -376,7 +392,7 @@ def tool_render_heatmap(args: dict) -> MCPToolResult:
         return MCPToolResult(ok=True, data={
             "image_base64": img_b64,
             "format": "png",
-            "message": "Rendered elevation heatmap."
+            "message": f"Rendered elevation heatmap ({style}) for {radius_km}km radius."
         })
     except Exception as e:
         return MCPToolResult(ok=False, error=str(e))

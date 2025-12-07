@@ -328,7 +328,10 @@ with gr.Blocks(title="Geo MCP Dashboard") as demo:
                     ["Check if a drone at 100m altitude can fly safely from 36.1, -112.1 to 36.15, -112.15 without hitting terrain."],
                     ["Sample 3 points between 36.1, -112.1 and 36.2, -112.2 and tell me which is highest."],
                     ["Calculate the distance between 36.1, -112.1 and 36.2, -112.2."],
-                    ["If I put a relay at 36.1, -112.1, can it connect to both 36.05, -112.05 and 36.15, -112.15?"]
+                    ["If I put a relay at 36.1, -112.1, can it connect to both 36.05, -112.05 and 36.15, -112.15?"],
+                    ["Create a 3D terrain map for coordinates 36.2, -112.15 with style 'viridis'."],
+                    ["Show a heatmap of elevation for the River Run route with radius 10km."],
+                    ["Generate a combined map overlay of line of sight from a tower at 36.1,-112.1 to the Rim Survey route."]
                 ]
             )
 

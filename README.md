@@ -121,7 +121,8 @@ You can use this server as a tool provider for Claude Desktop.
 ## 📸 Screenshots
 
 ### Mission Control
-*(Placeholder: Screenshot of the Mission Control tab showing the 3D plot and analysis report)*
+![Rim Survey UI](rim_survey_ui.png)
+*The Mission Control tab showing the Rim Survey mission visualization and report.*
 
 ### AI Assistant
 *(Placeholder: Screenshot of the AI Assistant generating a heatmap)*

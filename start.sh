@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Start MCP Server in background
-uvicorn server:app --host 0.0.0.0 --port 8000 &
+# Start the real MCP server (WebSocket) in background
+python -m mcp.server &
 
-# Wait for server to be ready
+# Wait for the MCP server to be ready (adjust if needed)
 sleep 5
 
-# Start Gradio Dashboard
+# Start Gradio Dashboard UI
 python gradio_dashboard.py

@@ -9,7 +9,7 @@ build:
 run:
 	docker run -d --name $(CONTAINER_NAME) \
 		--env-file .env \
-		-p 8000:8000 -p 7860:7860 \
+		-p 8000:8000 -p 7860:7860 -p 9000:9000 \
 		-v $(PWD)/dted:/app/dted \
 		$(IMAGE_NAME)
 	@echo "Server running at http://localhost:8000"

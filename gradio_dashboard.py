@@ -1,36 +1,54 @@
-import gradio as gr
-import requests
+import os
 import json
 import base64
 from io import BytesIO
-from PIL import Image
+
+import gradio as gr
+
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-import os
+from PIL import Image
+
 from huggingface_hub import InferenceClient
 from dotenv import load_dotenv
 
+# MCP client for WebSocket communication
+from mcp.server import MCPClient
+
 load_dotenv()
 
-MCP_BASE_URL = "http://localhost:8000"
+# Constants
 SAMPLE_ROUTES_DIR = "sample_routes"
-
 def get_sample_routes():
+    """Return a list of sample GeoJSON route filenames."""
     if not os.path.exists(SAMPLE_ROUTES_DIR):
         return []
     return [f for f in os.listdir(SAMPLE_ROUTES_DIR) if f.endswith('.geojson')]
 
+# Instantiate MCP client
+mcp_client = MCPClient("ws://localhost:9000")
+
+# Legacy HTTP base URL (unused)
+MCP_BASE_URL = "http://localhost:8000"  # retained for legacy fallback (unused)
+
 def call_mcp(name, arguments):
+    """Call an MCP tool via the WebSocket client.
+
+    Parameters
+    ----------
+    name: str
+        The tool name to invoke.
+    arguments: dict
+        Arguments for the tool.
+    """
     try:
-        resp = requests.post(f"{MCP_BASE_URL}/mcp/call", json={"name": name, "arguments": arguments})
-        resp.raise_for_status()
-        data = resp.json()
-        if not data.get("ok"):
-            return f"Error: {data.get('error')}"
-        return data["data"]
+        # Use the global MCP client (created below) to send the request.
+        result = mcp_client.call(name, arguments)
+        return result
     except Exception as e:
         return f"Connection Error: {str(e)}"
+
 
 def get_elevation(lat, lon):
     res = call_mcp("elevation", {"lat": float(lat), "lon": float(lon)})

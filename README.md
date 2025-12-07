@@ -1,7 +1,18 @@
 # 🌍 Geospatial MCP Server & AI Assistant
 
-**Author:** Glenn Mossy  
+![CI](https://github.com/gmossy/geospatial_mcp_server_experiments/actions/workflows/ci.yml/badge.svg)
+
+**Author:** [Glenn Mossy](https://github.com/gmossy) | [LinkedIn](https://www.linkedin.com/in/glenn-mossy)
 **License:** MIT
+
+**Tech Stack:**
+![Python 3.11](https://img.shields.io/badge/Python-3.11-blue)
+![Gradio 6.0](https://img.shields.io/badge/Gradio-6.0-ff69b4)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115.0-green)
+![Docker](https://img.shields.io/badge/Docker-✓-blue)
+![HuggingFace](https://img.shields.io/badge/Hugging%20Face-✓-ff9900)
+![LLMs](https://img.shields.io/badge/LLMs-Open%20Source-8A2BE2)
+![MCP](https://img.shields.io/badge/MCP-Model%20Context%20Protocol-ff4500)
 
 A powerful **Model Context Protocol (MCP)** server designed for advanced geospatial analysis, 3D terrain visualization, and autonomous drone mission planning. This project integrates real-time geospatial tools with an AI Assistant powered by open-source LLMs.
 
@@ -52,11 +63,11 @@ A powerful **Model Context Protocol (MCP)** server designed for advanced geospat
     ```
 
 2.  **Configure Environment**:
-    Create a `.env` file in the root directory:
+    Create a `.env` file in the root directory (this file is ignored by Git). Add your Hugging Face API token:
     ```bash
     HF_TOKEN=hf_YourHuggingFaceTokenHere
     ```
-
+    The `.env` file allows the application to load the token at runtime without hard‑coding credentials.
 3.  **Build and Run**:
     ```bash
     make build

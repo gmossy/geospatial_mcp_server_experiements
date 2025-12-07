@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+pydantic
+mgrs
+pyproj
+shapely
+rasterio
+numpy
+requests
+matplotlib
+gradio
+huggingface_hub
+python-dotenv

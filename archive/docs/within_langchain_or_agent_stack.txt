@@ -1,0 +1,2 @@
+data = await mcp_call_tool("to_mgrs", {"lat": 38.8895, "lon": -77.0353})
+print(data["mgrs"])

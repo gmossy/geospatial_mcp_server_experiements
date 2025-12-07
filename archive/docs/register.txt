@@ -1,0 +1,30 @@
+TOOLS["dted_elevation"] = {
+    "name": "dted_elevation",
+    "description": "Get elevation from DTED/DEM at a point.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "lat": {"type": "number"},
+            "lon": {"type": "number"}
+        },
+        "required": ["lat", "lon"]
+    }
+}
+
+TOOLS["line_of_sight"] = {
+    "name": "line_of_sight",
+    "description": "Check LOS between observer and target using DEM.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "observer_lat": {"type": "number"},
+            "observer_lon": {"type": "number"},
+            "target_lat": {"type": "number"},
+            "target_lon": {"type": "number"},
+            "observer_height_m": {"type": "number"},
+            "target_height_m": {"type": "number"},
+            "samples": {"type": "integer"}
+        },
+        "required": ["observer_lat", "observer_lon", "target_lat", "target_lon"]
+    }
+}

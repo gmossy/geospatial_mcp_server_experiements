@@ -1,0 +1,45 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "Route 1",
+                "distance_m": 5000
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        -112.10,
+                        36.10
+                    ],
+                    [
+                        -112.11,
+                        36.105
+                    ],
+                    [
+                        -112.12,
+                        36.11
+                    ],
+                    [
+                        -112.13,
+                        36.10
+                    ],
+                    [
+                        -112.14,
+                        36.09
+                    ],
+                    [
+                        -112.12,
+                        36.08
+                    ],
+                    [
+                        -112.10,
+                        36.10
+                    ]
+                ]
+            }
+        }
+    ]
+}

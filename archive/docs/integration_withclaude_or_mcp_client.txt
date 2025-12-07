@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "geo-mcp": {
+      "type": "http",
+      "url": "http://localhost:8000",
+      "toolsEndpoint": "/mcp/tools",
+      "callEndpoint": "/mcp/call"
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "Rim Survey"
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        -112.12,
+                        36.15
+                    ],
+                    [
+                        -112.11,
+                        36.145
+                    ],
+                    [
+                        -112.10,
+                        36.15
+                    ],
+                    [
+                        -112.09,
+                        36.145
+                    ],
+                    [
+                        -112.08,
+                        36.15
+                    ],
+                    [
+                        -112.07,
+                        36.145
+                    ],
+                    [
+                        -112.06,
+                        36.15
+                    ]
+                ]
+            }
+        }
+    ]
+}

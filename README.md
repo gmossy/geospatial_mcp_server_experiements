@@ -11,10 +11,17 @@ A powerful **Model Context Protocol (MCP)** server designed for advanced geospat
 ## ✨ Key Features
 
 ### 🎮 Mission Control Center
-*   **Autonomous Mission Planning**: Select from pre-defined scenarios like "Rim Survey", "Grand Canyon Tour", and "River Run".
-*   **Safety Analysis**: Automatically calculates route distance, checks for terrain collisions, and verifies safe altitude margins.
-*   **Line of Sight (LOS)**: Simulates connectivity from Comms Towers and visibility from Observation Posts.
-*   **3D Visualization**: Interactive 3D plots of the drone's flight path relative to the terrain.
+
+*   **Rim Survey** – High‑altitude canyon rim survey.
+*   **Grand Canyon Tour** – Scenic route through the canyon.
+*   **River Run** – Low‑altitude river‑following flight.
+*   **Drone Speed** – Adjustable speed slider with flight‑time estimate.
+*   **Line of Sight** – Connectivity checks for towers and observation posts.
+*   **3D Visualization** – Interactive terrain and path rendering.
+
+## 🚀 Proposed UI Upgrade
+
+* **Mission Control** – A future enhancement that will provide an intuitive dashboard for planning, visualizing, and analyzing drone missions (Rim Survey, Grand Canyon Tour, River Run, etc.). This upgrade will include speed controls, flight‑time estimates, and richer 3D visualizations.
 
 ### 🤖 AI Geospatial Assistant
 *   **Natural Language Interface**: Chat with your geospatial data using models like `Qwen/Qwen2.5-72B-Instruct` (via Hugging Face).
